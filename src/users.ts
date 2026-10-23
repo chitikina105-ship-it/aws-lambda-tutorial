@@ -162,7 +162,7 @@ const handleRequest = async (
 export const handler: APIGatewayProxyHandler =
   async (event) => {
     const response = await handleRequest(event);
-
+    console.log("Response of lambda: ", response);
     return {
       ...response,
       headers: {
