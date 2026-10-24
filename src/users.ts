@@ -4,6 +4,7 @@ import type {
   APIGatewayProxyHandler,
   APIGatewayProxyResult,
 } from "aws-lambda";
+import logger from "./logger.js";
 
 import { randomUUID } from "node:crypto";
 
@@ -32,20 +33,29 @@ const TABLE_NAME = process.env.TABLE_NAME ?? "Users";
 const handleRequest = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  console.log("Invoked Lambda:", event.httpMethod, event.path);
-
   const method = event.httpMethod;
   const id = event.pathParameters?.id;
+  const requestContext = {
+    method,
+    path: event.path,
+    requestId: event.requestContext.requestId,
+  };
+
+  logger.info("User request received", requestContext);
 
   try {
     // GET /users
     if (method === "GET" && !id) {
+      logger.info("Listing users", requestContext);
       const result = await dynamoDB.send(
         new ScanCommand({
           TableName: TABLE_NAME,
         }),
       );
-
+      logger.info("Users listed", {
+        ...requestContext,
+        count: result.Items?.length ?? 0,
+      });
       return {
         statusCode: 200,
         body: JSON.stringify(result.Items ?? []),
@@ -54,6 +64,7 @@ const handleRequest = async (
 
     // GET /users/{id}
     if (method === "GET" && id) {
+      logger.info("Getting user", { ...requestContext, userId: id });
       const result = await dynamoDB.send(
         new GetCommand({
           TableName: TABLE_NAME,
@@ -61,22 +72,31 @@ const handleRequest = async (
         }),
       );
 
-      return result.Item
-        ? {
-            statusCode: 200,
-            body: JSON.stringify(result.Item),
-          }
-        : {
-            statusCode: 404,
-            body: JSON.stringify({ message: "User not found" }),
-          };
+      if (result.Item) {
+        logger.info("User retrieved", { ...requestContext, userId: id });
+        return {
+          statusCode: 200,
+          body: JSON.stringify(result.Item),
+        };
+      }
+
+      logger.warn("User not found", { ...requestContext, userId: id });
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: "User not found" }),
+      };
     }
 
     // POST /users
     if (method === "POST") {
+      logger.info("Creating user", requestContext);
       const body = JSON.parse(event.body ?? "{}");
 
       if (!body.name || !body.email) {
+        logger.warn("User creation rejected", {
+          ...requestContext,
+          reason: "Name and email are required",
+        });
         return {
           statusCode: 400,
           body: JSON.stringify({
@@ -97,7 +117,7 @@ const handleRequest = async (
           Item: newUser,
         }),
       );
-
+      logger.info("User created", { ...requestContext, userId: newUser.id });
       return {
         statusCode: 201,
         body: JSON.stringify(newUser),
@@ -106,9 +126,15 @@ const handleRequest = async (
 
     // PUT /users/{id}
     if (method === "PUT" && id) {
+      logger.info("Updating user", { ...requestContext, userId: id });
       const body = JSON.parse(event.body ?? "{}");
 
       if (!body.name && !body.email) {
+        logger.warn("User update rejected", {
+          ...requestContext,
+          userId: id,
+          reason: "Provide name or email to update",
+        });
         return {
           statusCode: 400,
           body: JSON.stringify({
@@ -125,6 +151,7 @@ const handleRequest = async (
       );
 
       if (!existing.Item) {
+        logger.warn("User not found", { ...requestContext, userId: id });
         return {
           statusCode: 404,
           body: JSON.stringify({ message: "User not found" }),
@@ -161,6 +188,7 @@ const handleRequest = async (
         }),
       );
 
+      logger.info("User updated", { ...requestContext, userId: id });
       return {
         statusCode: 200,
         body: JSON.stringify(updatedUser),
@@ -169,6 +197,7 @@ const handleRequest = async (
 
     // DELETE /users/{id}
     if (method === "DELETE" && id) {
+      logger.info("Deleting user", { ...requestContext, userId: id });
       const result = await dynamoDB.send(
         new DeleteCommand({
           TableName: TABLE_NAME,
@@ -178,12 +207,14 @@ const handleRequest = async (
       );
 
       if (!result.Attributes) {
+        logger.warn("User not found", { ...requestContext, userId: id });
         return {
           statusCode: 404,
           body: JSON.stringify({ message: "User not found" }),
         };
       }
 
+      logger.info("User deleted", { ...requestContext, userId: id });
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -193,6 +224,7 @@ const handleRequest = async (
       };
     }
 
+    logger.warn("Unsupported user route", requestContext);
     return {
       statusCode: 405,
       body: JSON.stringify({
@@ -200,9 +232,17 @@ const handleRequest = async (
       }),
     };
   } catch (error) {
-    console.error("CRUD operation failed:", error);
+    logger.error("User request failed", {
+      ...requestContext,
+      userId: id,
+      error:
+        error instanceof Error
+          ? { name: error.name, message: error.message, stack: error.stack }
+          : error,
+    });
 
     if (error instanceof SyntaxError) {
+      logger.warn("Invalid request body", requestContext);
       return {
         statusCode: 400,
         body: JSON.stringify({ message: "Invalid request body" }),
@@ -218,6 +258,12 @@ const handleRequest = async (
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   const response = await handleRequest(event);
+  logger.info("User request completed", {
+    method: event.httpMethod,
+    path: event.path,
+    requestId: event.requestContext.requestId,
+    statusCode: response.statusCode,
+  });
 
   return {
     ...response,
