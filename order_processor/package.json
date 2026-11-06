@@ -1,25 +1,18 @@
 {
-  "name": "aws_lambda",
+  "name": "order_processor",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "zip": "powershell -NoProfile -Command \"Compress-Archive -Path orderProcessor.js, package.json, package-lock.json, node_modules -DestinationPath orderProcessor.zip -Force\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
-  "devDependencies": {
-    "@types/aws-lambda": "^8.10.164",
-    "@types/node": "^26.6.5",
-    "typescript": "^7.0.2"
-  },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1156.0",
-    "@aws-sdk/lib-dynamodb": "^3.1156.0",
-    "aws-lambda": "^1.0.7",
-    "winston": "^3.19.0"
+    "@aws-sdk/lib-dynamodb": "^3.1156.0"
   }
 }
