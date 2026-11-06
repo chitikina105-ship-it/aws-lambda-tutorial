@@ -1,0 +1,19 @@
+{
+  "name": "aws-sqs-sns",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "producer": "node sqs/producer.js",
+    "consumer": "node sqs/consumer.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.1163.0",
+    "@aws-sdk/client-sqs": "^3.1163.0",
+    "dotenv": "^18.0.9"
+  }
+}
