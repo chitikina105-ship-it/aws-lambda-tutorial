@@ -10,10 +10,10 @@
     "strict": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "users-crud-lambda/src",
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*.ts"
+    "users-crud-lambda/src/**/*.ts"
   ]
 }
