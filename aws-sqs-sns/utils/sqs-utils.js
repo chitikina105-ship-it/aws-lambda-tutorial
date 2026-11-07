@@ -3,23 +3,12 @@ import {
   SendMessageCommand
 } from "@aws-sdk/client-sqs";
 
-import dotenv from "dotenv";
-
-dotenv.config();
-
 const sqsClient = new SQSClient({
   region: process.env.AWS_REGION
 });
 
-const sendOrder = async () => {
+export const sendOrder = async (order) => {
   try {
-    const order = {
-      orderId: "ORD101",
-      customerName: "Sunil",
-      amount: 2500,
-      status: "CREATED"
-    };
-
     const command = new SendMessageCommand({
       QueueUrl: process.env.SQS_QUEUE_URL,
       MessageBody: JSON.stringify(order)
@@ -35,4 +24,3 @@ const sendOrder = async () => {
   }
 };
 
-sendOrder();

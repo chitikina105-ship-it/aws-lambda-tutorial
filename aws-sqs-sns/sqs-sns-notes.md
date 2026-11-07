@@ -680,7 +680,10 @@ A customer places an order.
 5. On successful processing, the event source mapping deletes the successfully processed messages.
 6. On failure, messages become available again after visibility timeout.
 
+Note: Lambda's Event Source Mapping (ESM) is an AWS-managed integration that connects an event source, such as SQS, to a Lambda function. Bridge between SQS and Lambda
+
 Important: Lambda does not require application code to call DeleteMessage for a successfully processed SQS event.
+
 
 ---
 
