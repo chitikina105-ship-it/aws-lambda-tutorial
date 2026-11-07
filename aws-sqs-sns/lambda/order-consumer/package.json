@@ -1,0 +1,16 @@
+{
+  "name": "order-consumer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "powershell -NoProfile -Command \"Compress-Archive -Path index.js, package.json, package-lock.json, node_modules -DestinationPath function.zip -Force\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.1164.0"
+  }
+}

@@ -8,6 +8,7 @@ node_modules/
 
 # Build output
 dist/
+build/
 
 # Logs
 logs/
@@ -23,3 +24,20 @@ pnpm-debug.log*
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# ZIP archives
+*.zip
+
+# Other archives
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Binary files
+*.exe
+*.dll
+*.so
+*.bin
+*.class
+*.jar
